@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta name="viewport" charset="UTF-8" content="width=device-width, initial-scale=1">
+    <title>Key-Based Config</title>
+    <style>
+        :root {
+            --light-background: #f5f5f5;
+            --dark-background: #d2d2d2;
+            --border: #727a5b;
+            --dark-font: #141414;
+            --light-font: #737373;
+            --selection: #282b21;
+            --svg: #110918;
+        }
+
+        @keyframes flash {
+            4% {
+                background: var(--dark-background);
+            }
+        }
+
+        body {
+            color: var(--dark-font);
+        }
+
+        #title {
+            width: 100%;
+            text-align: center;
+        }
+
+        .vr {
+            height: 100%;
+            border-left: 2px solid var(--border);
+            float: left;
+        }
+
+        .hr {
+            width: 100%;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .svg-icon {
+            width: 70px;
+            height: 70px;
+            stroke: var(--svg);
+            stroke-width: 15px;
+        }
+
+        .svg * {
+            pointer-events: none;
+        }
+
+        #object-creator {
+            stroke-width: 18px;
+        }
+
+        .empty {
+            fill: none;
+        }
+
+        #object-creator.empty {
+            stroke-dasharray: 14px;
+        }
+
+        #recycled-file.empty {
+            stroke-dasharray: 10px;
+        }
+
+        #header {
+            width: 100%;
+        }
+
+        #save {
+            float: right;
+        }
+
+        #object-page,
+        #form-page-wrapper {
+            height: 50vh;
+            max-height: 100%;
+            overflow-y: auto;
+        }
+
+        #object-page {
+            float: left;
+            background-color: var(--light-background);
+            position: relative;
+            direction: rtl;
+        }
+
+        #object-page>* {
+            direction: ltr;
+        }
+
+        #form-page-wrapper {
+            background: var(--light-background);
+        }
+
+        #form-page-wrapper.active {
+            border-left: 3px dashed var(--selection);
+        }
+
+        #form-page table {
+            margin: 4px 8px 4px 8px;
+        }
+
+        #form-page td {
+            padding-top: 5px;
+            font-size: 22px;
+        }
+
+        #object-scroll-area {
+            float: left;
+            position: sticky;
+            position: -webkit-sticky;
+            top: 0;
+            left: 0;
+            width: 70px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            border-right: 3px solid var(--border);
+            background: var(--dark-background);
+        }
+
+        #paper-container {
+            display: inline-grid;
+            margin: auto;
+            padding: 7px 0;
+            z-index: 1;
+        }
+
+        #object-tree {
+            margin-left: 70px;
+        }
+
+        .draggable-object {
+            font-family: Tahoma, Geneva, sans-serif;
+            position: relative;
+            font-size: 22px;
+            white-space: pre;
+            user-select: none;
+            text-align: left;
+            color: var(--dark-font);
+        }
+
+        #adviser {
+            color: var(--light-font);
+            transition-duration: 2000ms;
+        }
+
+        #adviser>svg {
+            vertical-align: middle;
+            height: 1em;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #adviser.success {
+            animation-name: flash;
+            animation-iteration-count: 1;
+        }
+
+        .key-string {
+            pointer-events: none;
+        }
+
+        .draggable-object[depth="0"]>.key-string {
+            text-align: center;
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .draggable-object[depth="1"] {
+            padding-left: 12px;
+        }
+
+        .draggable-object[depth="1"] .draggable-object {
+            border-left: 3px solid var(--border);
+            padding: 2px 0 2px 10px;
+            margin-left: 1.6em;
+        }
+
+        .draggable-object .draggable-object:first-of-type {
+            margin-top: 8px;
+        }
+
+        .draggable-object .draggable-object:last-child {
+            padding-bottom: 5px;
+        }
+
+        .draggable-object.hovered {
+            background-size: 1em;
+            background-image: linear-gradient(to right,
+                    var(--border),
+                    var(--light-background));
+            background-repeat: no-repeat;
+        }
+
+        .selected {
+            border-top: 3px dashed var(--selection);
+            border-bottom: 3px dashed var(--selection);
+        }
+
+        .svg-icon.indicator {
+            position: absolute;
+            left: -1.6em;
+            height: 1.2em;
+            width: 0.9em;
+            stroke: var(--dark-font);
+            pointer-events: none;
+        }
+
+        .config-input {
+            font-size: 18px;
+            font-family: Tahoma, Geneva, sans-serif;
+        }
+    </style>
+    <script src="structure.js" defer></script>
+    <script type="module" defer>
+        import extractConfig from "./validation.js";
+
+        const metaTree = {
+            label: "l1",
+            type: "string",
+            default: ".^",
+            sub: {
+                label: "l2",
+                type: "string",
+                default: ".^",
+                sub: [
+                    {
+                        label: "l3",
+                        type: "number",
+                        default: 0
+                    },
+                    {
+                        label: "l4",
+                        type: "boolean",
+                        default: true
+                    }
+                ]
+            }
+        };
+
+        loadDragInterface(...extractConfig({
+            title: "title",
+            metaTree: metaTree,
+            valueForest: []
+        }));
+    </script>
+</head>
+
+<body>
+
+    <div id="header">
+        <h1 id="title">Something Something Title</h1>
+    </div>
+    <div id="object-page">
+        <div id="object-scroll-area">
+            <div id="paper-container" class="selected" draggable="true">
+                <svg id="object-creator" class="svg-icon" x="0px" y="0px" viewBox="0 0 512 512" xml:space="preserve">
+                    <path
+                        d="M438.857,0H73.143c-5.77,0-10.449,4.679-10.449,10.449v491.102c0,5.77,4.679,10.449,10.449,10.449h219.429    c0.7,0,1.392-0.071,2.067-0.209c0.42-0.084,0.812-0.235,1.212-0.367c0.246-0.082,0.502-0.13,0.74-0.23    c0.428-0.18,0.821-0.418,1.218-0.65c0.19-0.111,0.394-0.191,0.577-0.314c0.49-0.329,0.937-0.712,1.363-1.117    c0.066-0.062,0.146-0.107,0.211-0.172l146.286-146.286c0.065-0.065,0.11-0.144,0.173-0.211c0.405-0.426,0.788-0.874,1.117-1.364    c0.122-0.181,0.202-0.385,0.312-0.574c0.233-0.398,0.473-0.792,0.652-1.222c0.098-0.235,0.146-0.487,0.227-0.73    c0.135-0.403,0.286-0.799,0.371-1.222c0.136-0.676,0.208-1.367,0.208-2.067V10.449C449.306,4.679,444.628,0,438.857,0z     M303.02,476.325V365.714h110.611L303.02,476.325z M428.408,344.816H292.571c-5.77,0-10.449,4.679-10.449,10.449v135.837H83.592    V20.898h344.816V344.816z" />
+                </svg>
+                <svg id="object-destroyer" class="svg-icon" style="display: none" x="0px" y="0px" viewBox="0 0 470 470" xml:space="preserve">
+                    <path
+                        d="M186.736,312.762c0.95,3.267,3.935,5.408,7.197,5.408c0.592,0,1.193-0.07,1.792-0.218l22.154-5.437   c4.023-0.987,6.483-5.048,5.496-9.071s-5.051-6.485-9.071-5.496l-5.082,1.247L235,254.546l11.67,20.213   c2.072,3.587,6.659,4.817,10.245,2.745c3.587-2.071,4.816-6.658,2.745-10.245l-18.166-31.463c-1.34-2.32-3.815-3.75-6.495-3.75   s-5.155,1.43-6.495,3.75l-32.273,55.898l-1.461-5.024c-1.157-3.977-5.319-6.264-9.295-5.108c-3.978,1.156-6.265,5.318-5.108,9.295   L186.736,312.762z" />
+                    <path
+                        d="M160.768,375.62h64.546l-3.621,3.777c-2.867,2.99-2.766,7.738,0.224,10.604c1.454,1.394,3.322,2.086,5.189,2.086   c1.973,0,3.942-0.773,5.415-2.31l15.785-16.467c2.781-2.901,2.781-7.479,0-10.38l-15.785-16.467   c-2.866-2.99-7.613-3.091-10.604-0.224c-2.99,2.866-3.091,7.614-0.224,10.604l3.621,3.777h-51.556l11.67-20.213   c2.071-3.587,0.842-8.174-2.745-10.245c-3.587-2.072-8.174-0.842-10.245,2.745l-18.165,31.463c-1.34,2.321-1.34,5.18,0,7.5   S158.088,375.62,160.768,375.62z" />
+                    <path
+                        d="M259.708,326.103c0.699,0.204,1.404,0.3,2.097,0.3c3.25,0,6.245-2.13,7.198-5.408l1.461-5.024l25.778,44.649h-23.339   c-4.142,0-7.5,3.358-7.5,7.5s3.358,7.5,7.5,7.5h36.33c2.68,0,5.155-1.43,6.495-3.75s1.34-5.18,0-7.5l-32.273-55.898l5.081,1.247   c4.023,0.989,8.084-1.474,9.071-5.496c0.987-4.023-1.473-8.084-5.496-9.071l-22.154-5.437c-3.903-0.959-7.868,1.332-8.989,5.19   l-6.368,21.904C253.443,320.785,255.73,324.947,259.708,326.103z" />
+                    <path
+                        d="M380.396,177.173H89.604c-4.142,0-7.5,3.358-7.5,7.5s3.358,7.5,7.5,7.5h3.024l18.068,250.911   C111.764,457.926,124.739,470,139.619,470h190.763c14.88,0,27.854-12.074,28.923-26.916l18.068-250.911h3.024   c4.142,0,7.5-3.358,7.5-7.5S384.538,177.173,380.396,177.173z M344.343,442.007C343.836,449.05,337.442,455,330.381,455H139.619   c-7.061,0-13.455-5.95-13.962-12.993l-17.99-249.834h254.667L344.343,442.007z" />
+                    <path id="recycled-file" class="empty"
+                        d="M180.668,162.165H235c1.989,0,3.897-0.79,5.303-2.197l54.332-54.332c1.407-1.406,2.197-3.314,2.197-5.303V7.5   c0-4.142-3.358-7.5-7.5-7.5H180.668c-4.142,0-7.5,3.358-7.5,7.5v147.165C173.168,158.807,176.526,162.165,180.668,162.165z    M242.5,136.559v-28.726h28.726L242.5,136.559z M188.168,15h93.664v77.833H235c-4.142,0-7.5,3.358-7.5,7.5v46.832h-39.332V15z" />
+                </svg>
+            </div>
+        </div>
+        <div id="object-tree"></div>
+    </div>
+    <div id="form-page-wrapper">
+        <div class="vr"></div>
+        <div id="form-page"></div>
+    </div>
+
+</body>

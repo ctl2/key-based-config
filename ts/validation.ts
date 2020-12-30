@@ -1,4 +1,4 @@
-import * as ValidationErrors from "./validationErrors";
+import * as ValidationErrors from "./validationErrors.js";
 
 function validateUnexpectedKeys(objectId: string, object: object, expected: string[]) {
     for (let key of Object.keys(object)) {
@@ -243,7 +243,7 @@ function validateCompliance(metaTree: ConfigMetaTree, valueForest: ConfigValueTr
     validateKeyLevelCompliance(metaTree, valueForest);
 }
 
-export function extractConfig(data: any): [string, number, ConfigMetaTree, ConfigValueTree[]] {
+export default function extractConfig(data: any): [string, number, ConfigMetaTree, ConfigValueTree[]] {
     // Extract data
     if (typeof data !== "object") throw new Error("data must be an object");
     let title: any = data.title;

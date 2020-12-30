@@ -478,6 +478,7 @@ class ConfigKeyTree extends ConfigNode {
         // Pin singleton subs
         if (this.sub.length === 1) this.sub[0].pin();
         // Add to DOM
+        if (this.isDeepestKey) this.element.classList.add("deepest-key");
         this.valueElement.classList.add("key-string");
         if (parent !== undefined) {
             parent.element.appendChild(this.element);

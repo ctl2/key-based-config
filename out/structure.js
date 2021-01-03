@@ -1,6 +1,17 @@
 const objectCreator = document.getElementById("object-creator");
 const objectDestroyer = document.getElementById("object-destroyer");
 
+function flash(element, duration, callback) {
+    const previousDuration = element.style.animationDuration;
+    element.style.animationDuration = duration + "ms";
+    element.classList.add("success");
+    window.setTimeout(() => {
+        element.classList.remove("success");
+        element.style.animationDuration = previousDuration;
+        if (callback !== undefined) callback();
+    }, duration);
+}
+
 function getElement(html) {
     let wrapper = document.createElement("span");
     wrapper.innerHTML = html;
@@ -17,19 +28,29 @@ function handleEnter(event, accepted) {
 
 class AdviceManager {
 
-    static Advice = class {
-        constructor(advice, endTriggerMessage, isOptional) {
-            this.advice = advice;
-            if (endTriggerMessage !== undefined) {
-                this.endTriggerMessage = endTriggerMessage;
-                this.isOptional = isOptional;
-            }
+    Message = class {
+        constructor(text) {
+            this.message = text;
+        }
+    }
+
+    Prompt = class extends this.Message {
+        constructor(text, endTriggerMessage, isOptional) {
+            super(text);
+            this.endTriggerMessage = endTriggerMessage;
+            this.isOptional = isOptional;
+        }
+    }
+
+    Demonstration = class extends this.Message {
+        constructor(text, demonstration) {
+            super(text);
+            this.demonstrate = demonstration;
         }
     }
 
     adviser;
     advice;
-    progress;
     isActive;
     currentAdviceTimeout;
     fadeInDuration = 2000;
@@ -51,64 +72,183 @@ class AdviceManager {
         const oneDeep = keyDepth === 1;
         this.adviser = ConfigKeyTree.rootNode.valueElement;
         this.advice = [
-            new AdviceManager.Advice("Let's make some data!"),
-            new AdviceManager.Advice("Drag the file picture onto me with your mouse",
-                "create", false),
-            new AdviceManager.Advice("Nice! You just made your first bit of data"),
-            new AdviceManager.Advice("What you see below is the data's path"),
-            new AdviceManager.Advice("When you add new data, it's given a default path"),
-            new AdviceManager.Advice("To check out your data, ..."),
-            new AdviceManager.Advice("... click on the " + (
-                oneDeep?
-                    "":
-                    "rightmost"
-                ) + " path node below",
-                "key", true),
-            new AdviceManager.Advice("Not that one, the farthest node to the right",
-                "data", true),
-            new AdviceManager.Advice("You should see an interface for editing data"),
-            new AdviceManager.Advice("The top-most input is for the path node"),
-                ...hasValueForest()? [
-                    new AdviceManager.Advice("The others are for your data"),
+            new this.Message(
+                "Let's build a data tree!"
+            ),
+            new this.Message(
+                "Do you see that blank file to my left?"
+            ),
+            new this.Prompt(
+                "Try dragging it onto me with your mouse.",
+                "create",
+                false
+            ),
+            new this.Message(
+                "Good job! You just built your first 'branch'."
+            ),
+            new this.Message(
+                "Our tree is going to be made up of 'nodes'"
+            ),
+            new this.Message(
+                "The interface below me shows 'branch nodes'"
+            ),
+            new this.Message(
+                "Branches are paths from me to a set of 'leaf nodes'"
+            ),
+            new this.Demonstration(
+                "Here's our first branch.",
+                (callback) => {
+                    const flashPath = (nextNode) => {
+                        flash(
+                            nextNode.element,
+                            1000,
+                            nextNode.isDeepestKey?
+                                callback:
+                                () => flashPath(nextNode.sub[0])
+                        );
+                    }
+                    flashPath(ConfigKeyTree.rootNode);
+                }
+            ),
+            new this.Message(
+                "To see the branch's leaf nodes,"
+            ),
+            new this.Prompt(
+                "click on the" + (
+                    oneDeep?
+                        "":
+                        " rightmost"
+                    ) + " branch node below.",
+                "key",
+                true
+            ),
+            new this.Prompt(
+                "Not that one, the farthest node to the right.",
+                "data",
+                true
+            ),
+            new this.Message(
+                "You should see an interface for editing node values."
+            ),
+            new this.Message(
+                "The topmost input is for the branch node."
+            ),
+            ...hasValueForest()?
+                [
+                    new this.Message(
+                        "The others are for leaf nodes."
+                    )
                 ]: [
-                    new AdviceManager.Advice("The others are... oh, there aren't any others!"),
-                    new AdviceManager.Advice("You must only need path data..."),
-                    new AdviceManager.Advice("Well, that makes things a little simpler I suppose"),
+                    new this.Message(
+                        "The others are... oh, there aren't any others!"
+                    ),
+                    new this.Message(
+                        "This tree must not need any leaves..."
+                    ),
+                    new this.Message(
+                        "Well, that makes things a little simpler I suppose."
+                    )
                 ],
-            new AdviceManager.Advice("Before we start editing things, ..."),
-            new AdviceManager.Advice("... try creating another bit of data",
-                "reject", true),
-            new AdviceManager.Advice("It didn't work. Don't worry, that was expected"),
-            new AdviceManager.Advice("Each bit of data must have a unique path, ..."),
-            new AdviceManager.Advice("... so you can't add anything new yet"),
-            new AdviceManager.Advice("Okay, now try editing a path node's value",
-                "edit", false),
-            new AdviceManager.Advice("Close the editor by clicking the node again",
-                "close", true),
-            new AdviceManager.Advice("Now that we've got a non-default path node, ..."),
-            new AdviceManager.Advice("... we can make another bit of data!"),
-            new AdviceManager.Advice("Drag the file onto " + (
-                oneDeep?
-                    "me again":
-                    "the edited node's parent"
-                ),
-                "create", false),
-            new AdviceManager.Advice("You can drag path nodes around to move data",
-                "drag", true),
-                ...oneDeep? []: [
-                    new AdviceManager.Advice("Nodes without siblings have a pin to their left"),
-                    new AdviceManager.Advice("This prevents you from moving or deleting them"),
-                    new AdviceManager.Advice("...Which brings us to deleting!"),
+            new this.Message(
+                "Before we start editing things,"
+            ),
+            new this.Prompt(
+                "try using that file again to create another branch.",
+                "reject",
+                true
+            ),
+            new this.Message(
+                "It didn't work. Don't worry, that was expected."
+            ),
+            new this.Message(
+                "Each branch in our tree must be unique,"
+            ),
+            new this.Message(
+                "so we need to alter our first branch before adding another."
+            ),
+            new this.Prompt(
+                "Okay, let's try editing a branch node's value.",
+                "value-edit",
+                true
+            ),
+            new this.Message(
+                "Good try, but that wasn't a branch node."
+            ),
+            new this.Prompt(
+                "The branch node's input is at the top of the editor.",
+                "key-edit",
+                false
+            ),
+            new this.Prompt(
+                "Close the editor by clicking the branch node again.",
+                "close",
+                true
+            ),
+            new this.Message(
+                "Now that we've altered a branch node,"
+            ),
+            new this.Message(
+                "we can add a new branch next to it!"
+            ),
+            new this.Message(
+                "To add a new branch next to a branch node,"
+            ),
+            new this.Message(
+                "you must drag the file onto its 'parent' node."
+            ),
+            new this.Message(
+                "Each branch node has exactly one parent node."
+            ),
+            new this.Message(
+                "When you double click a node, its parent will flash.",
+            ),
+            new this.Prompt(
+                "Now, drag the file picture onto the edited node's parent.",
+                "create",
+                false
+            ),
+            new this.Message(
+                "Good job!"
+            ),
+            new this.Prompt(
+                "You can drag branch nodes around to move data.",
+                "drag",
+                true
+            ),
+            ...oneDeep? []:
+                [
+                    new this.Message(
+                        "Branch nodes without siblings have a pin to their left."
+                    ),
+                    new this.Message(
+                        "This prevents you from moving or deleting them."
+                    ),
+                    new this.Message(
+                        "Which brings us to deleting!"
+                    ),
                 ],
-            new AdviceManager.Advice("A bin should appear when you start dragging nodes"),
-            new AdviceManager.Advice("Delete data by dropping its path in the bin",
-                "delete", true),
-            new AdviceManager.Advice("And that's about all that you need to know!"),
-            new AdviceManager.Advice("There's a trick for scrolling whilst dragging"),
-            new AdviceManager.Advice("But I'll let you figure it out for yourself ;)"),
-            new AdviceManager.Advice("Happy dragging!")
+            new this.Message(
+                "A bin should appear when you start dragging nodes."
+            ),
+            new this.Prompt(
+                "You can delete data by dropping its branch in the bin.",
+                "delete",
+                true
+            ),
+            new this.Message(
+                "And that's about all that you need to know!"
+            ),
+            new this.Message(
+                "There's a trick for scrolling whilst dragging."
+            ),
+            new this.Message(
+                "But I'll let you figure it out for yourself ;)"
+            ),
+            new this.Message(
+                "Happy dragging!"
+            )
         ];
-        // Initialise progress field
+        // Figure out where to start advising from
         const isDefaultBranch = (valueForest, metaTree, depth) => {
             if (valueForest.length !== 1) return false;
             const branch = valueForest[0]
@@ -117,15 +257,20 @@ class AdviceManager {
                 true:
                 isDefaultBranch(branch.sub, metaTree.sub, depth + 1);
         }
-        this.progress = valueForest.length === 0?
-            0:
-            isDefaultBranch(valueForest, metaTree, 0)?
-                3:
-                this.advice.length - 1;
-        if (this.progress === this.advice.length - 1) {
+        this.advice.splice(
+            0,
+            valueForest.length === 0?
+                0:
+                isDefaultBranch(valueForest, metaTree, 0)?
+                    1:
+                    this.advice.length - 1
+        );
+        if (this.advice.length === 1) {
+            // Show welcome message
             this.isActive = true;
             this.advise();
         } else {
+            // Start advising when the help button is pressed
             this.isActive = false;
             this.helpButton = getElement(
                 `<svg style="transition-duration: ` + this.fadeOutDuration + `ms" x="0px" y="0px" viewBox="-10 -10 530 530" xml:space="preserve">
@@ -146,64 +291,85 @@ class AdviceManager {
     }
 
     removeHelpButton() {
+        if (this.helpButton === undefined) return;
         this.helpButton.style.opacity = "0";
         window.setTimeout(
-            () => this.helpButton.remove(),
+            () => {
+                this.helpButton.remove();
+                this.helpButton = undefined;
+            },
             this.fadeOutDuration
         )
     }
 
     notify(message) {
-        for (let i = this.progress; i < this.advice.length; i++) {
-            const advice = this.advice[i];
-            if ("endTriggerMessage" in advice) {
-                if (message === advice.endTriggerMessage) {
-                    this.progress = i + 1;
+        const passedAdvice = [];
+        while (this.advice.length > 0) {
+            const nextAdvice = this.advice.shift();
+            passedAdvice.push(nextAdvice);
+            if (nextAdvice instanceof this.Prompt) {
+                if (message === nextAdvice.endTriggerMessage) {
                     if (this.currentAdviceTimeout !== undefined) {
                         window.clearTimeout(this.currentAdviceTimeout);
                     }
                     // Make visual changes
                     this.advise(true);
+                    return;
                 }
-                if (!advice.isOptional) break;
+                if (!nextAdvice.isOptional) break;
             }
         }
+        this.advice = passedAdvice.concat(this.advice);
     }
 
     advise(triggeredBySuccess) {
         if (!this.isActive) {
-            if (!this.advice.slice(this.progress).some(advice => "endTriggerMessage" in advice && advice.isOptional === false)) {
+            if (!this.advice.some(
+                advice => "endTriggerMessage" in advice && advice.isOptional === false
+            )) {
                 this.removeHelpButton();
             }
         } else {
-            // handle success
-            if (triggeredBySuccess) {
-                const indicationLength = 2000;
-                this.adviser.style.animationDuration = indicationLength + "ms";
-                this.adviser.classList.add("success");
-                window.setTimeout(() => {
-                    this.adviser.classList.remove("success");
-                }, indicationLength);
+            const displayNextMessage = () => {
+                const nextAdvice = this.advice[0];
+                // Fade out
+                this.adviser.style.opacity = "0";
+                if (nextAdvice === undefined) return; // Stop advising when all relevant advice has been displayed
+                this.currentAdviceTimeout = window.setTimeout(() => {
+                    // Fade in
+                    this.adviser.innerText = nextAdvice.message;
+                    this.adviser.style.opacity = "1";
+                    // Set new timeout
+                    switch (nextAdvice.constructor.name) {
+                        case "Message":
+                            this.advice.shift();
+                            this.currentAdviceTimeout = window.setTimeout(
+                                () => {
+                                    this.advise(false);
+                                },
+                                this.fadeInDuration + nextAdvice.message.length * this.readTimePerCharacter
+                            );
+                            break;
+                        case "Demonstration":
+                            this.advice.shift();
+                            this.currentAdviceTimeout = window.setTimeout(
+                                () => new Promise(nextAdvice.demonstrate).then(
+                                    () => this.advise(false)
+                                ),
+                                this.fadeInDuration
+                            );
+                            break;
+                        case "Prompt":
+                            this.currentAdviceTimeout = undefined;
+                    }
+                }, this.fadeOutDuration);
             }
-            // Fade out
-            this.adviser.style.opacity = "0";
-            if (this.progress === this.advice.length) return; // Stop advising when all relevant advice has been displayed
-            this.currentAdviceTimeout = window.setTimeout(() => {
-                // Fade in
-                const nextAdvice = this.advice[this.progress].advice;
-                this.adviser.innerText = nextAdvice;
-                this.adviser.style.opacity = "1";
-                // Start next
-                if ("endTriggerMessage" in this.advice[this.progress]) {
-                    this.currentAdviceTimeout = undefined;
-                } else {
-                    // Recurse
-                    this.currentAdviceTimeout = window.setTimeout(() => {
-                        this.progress++;
-                        this.advise(false);
-                    }, this.fadeInDuration + nextAdvice.length * this.readTimePerCharacter);
-                }
-            }, this.fadeOutDuration);
+            if (triggeredBySuccess) {
+                flash(this.adviser, 2000);
+                displayNextMessage();
+            } else {
+                displayNextMessage();
+            }
         }
     }
 
@@ -366,6 +532,12 @@ class ConfigKeyTree extends ConfigNode {
             this.valueElement = document.createElement("span");
             this.element.appendChild(this.valueElement);
             this.isDeepestKey = Array.isArray(metaTree.sub);
+            // Add double click functionality
+            this.element.ondblclick = (event) => {
+                event.stopPropagation();
+                ConfigKeyTree.adviceManager.notify("parent");
+                flash(this.parent.element, 1000);
+            }
             // Add hoverability
             this.element.classList.add("hoverable");
             this.element.onmouseenter = (event) => {
@@ -659,7 +831,7 @@ function loadDragInterface(title, keyDepth, metaTree, valueForest) {
     document.getElementById("object-page").style.width = Math.max(
         keyDepth * 12,
         ...ConfigKeyTree.adviceManager.advice.map(
-            adviceObject => adviceObject.advice.length * 0.8
+            adviceObject => adviceObject.message.length * 0.8
         )
     ) + "em";
 
@@ -715,20 +887,21 @@ function loadDragInterface(title, keyDepth, metaTree, valueForest) {
         objectCreator.parentElement.ondragstart = function (event) {
             event.stopPropagation();
             objectCreator.classList.add("empty");
-            ConfigKeyTree.adviceManager.notify("reject");
             // Get defaults
             const defaultConfigTrees = getDefaultConfigTrees(metaTree, 1);
             const parentalValidityArrays = getParentalValidityArrays(defaultConfigTrees);
             let connectedDefaultTree;
             for (let reject of parentalValidityArrays.invalid) {
-                reject.element.ondragenter = (event) => handleEnter(event, false);
+                reject.element.ondragenter = (event) => {
+                    handleEnter(event, false);
+                    ConfigKeyTree.adviceManager.notify("reject");
+                }
                 reject.element.ondragover = (event) => handleEnter(event, false);
             }
             for (let parent of parentalValidityArrays.valid) {
                 parent.element.ondragover = (event) => handleEnter(event, true);
                 parent.element.ondragenter = function (event) {
                     handleEnter(event, true);
-                    ConfigKeyTree.adviceManager.notify("create");
                     // Remove old branch
                     if (connectedDefaultTree !== undefined) connectedDefaultTree.removeSelf();
                     // Connect new branch
@@ -739,6 +912,8 @@ function loadDragInterface(title, keyDepth, metaTree, valueForest) {
                     if (parent.depth === 0 && parent.sub.length === 1) connectedDefaultTree.pin();
                     // Remove old editor interface. Not necessary but seems like a good UX feature to me
                     clickHandler.unclick();
+                    // Notify
+                    ConfigKeyTree.adviceManager.notify("create");
                 }
             }
             objectCreator.parentElement.ondragend = () => {
@@ -820,7 +995,7 @@ function loadFormInterface(configKeyTree) {
     const handleInput = (value, inputElement, configNode) => {
         if (isValid(value, configNode)) {
             configNode.setValue(value);
-            if (configNode instanceof ConfigKeyTree) ConfigKeyTree.adviceManager.notify("edit");
+            ConfigKeyTree.adviceManager.notify(configNode instanceof ConfigKeyTree? "key-edit": "value-edit");
 
         } else {
             inputElement.classList.add("invalid-input");

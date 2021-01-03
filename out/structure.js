@@ -213,7 +213,7 @@ class AdviceManager {
             new this.Prompt(
                 "You can drag branch nodes around to move data.",
                 "drag",
-                true
+                false
             ),
             ...oneDeep? []:
                 [

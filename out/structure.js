@@ -161,10 +161,10 @@ class AdviceManager {
                 "It didn't work. Don't worry, that was expected."
             ),
             new this.Message(
-                "Each branch in our tree must be unique,"
+                "Each branch in our tree must be unique;"
             ),
             new this.Message(
-                "so we need to alter our first branch before adding another."
+                "We must alter our first branch before adding another."
             ),
             new this.Prompt(
                 "Okay, let's try editing a branch node's value.",
@@ -203,7 +203,7 @@ class AdviceManager {
                 "When you double click a node, its parent will flash.",
             ),
             new this.Prompt(
-                "Now, drag the file picture onto the edited node's parent.",
+                "Drag the file picture onto the edited node's parent.",
                 "create",
                 false
             ),
@@ -1017,7 +1017,7 @@ function loadFormInterface(configKeyTree) {
                 break;
             case "number":
                 inputElement.type = "number";
-                inputElement.oninput = () => handleInput(inputElement.value, inputElement, configNode);
+                inputElement.oninput = () => handleInput(Number(inputElement.value), inputElement, configNode);
                 inputElement.value = configNode.value;
                 break;
             case "string":

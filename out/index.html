@@ -47,14 +47,23 @@
             loadDragInterface(...extractConfig({
                 title: "This is a header. It adapts to the screen's width.",
                 metaTree: metaTree,
-                valueForest: []
+                valueForest: [],
+                isFixed: false
             }));
         } else {
             window.parent.postMessage({
                 event: "open"
             }, "*");
+
             window.addEventListener("message", message => {
-                loadDragInterface(...extractConfig(message.data));
+                try {
+                    loadDragInterface(...extractConfig(message.data));
+                } catch (error) {
+                    window.parent.postMessage({
+                        event: "error",
+                        reason: error.message
+                    }, "*");
+                }
             });
         }
     </script>
@@ -64,7 +73,6 @@
 
 <div id="modal-background">
 
-    <!-- Modal content -->
     <div id="modal-content">
         <div id="modal-header">
             <span id="close">&times;</span>

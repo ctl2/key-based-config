@@ -97,7 +97,7 @@ class AdviceManager {
                 "The interface below me shows 'branch nodes'."
             ),
             new this.Message(
-                "Branches are paths to a set of 'leaf nodes'."
+                "Branches are paths to a group of 'leaf nodes'."
             ),
             new this.Demonstration(
                 "Here's our first branch.",
@@ -122,7 +122,7 @@ class AdviceManager {
                     oneDeep?
                         "":
                         " rightmost"
-                    ) + " branch node below.",
+                ) + " branch node below.",
                 "key",
                 true
             ),
@@ -254,7 +254,7 @@ class AdviceManager {
                 "But I'll let you figure it out for yourself ;)"
             ),
             new this.Message(
-                "Happy dragging!"
+                "Have fun!"
             )
         ];
         // Figure out where to start advising from
@@ -266,14 +266,12 @@ class AdviceManager {
                 true:
                 isDefaultBranch(branch.sub, metaTree.sub, depth + 1);
         }
-        this.advice.splice(
-            0,
-            valueForest.length === 0?
-                0:
-                isDefaultBranch(valueForest, metaTree, 0)?
-                    1:
-                    this.advice.length - 1
-        );
+        if (valueForest.length > 0) {
+            this.advice.splice(0, !ConfigKeyTree.isFixed && isDefaultBranch(valueForest, metaTree, 0)?
+                1:
+                this.advice.length - 1
+            );
+        };
         // Start advising when the help button is pressed
         this.isActive = false;
         this.helpButton = getElement(
@@ -284,31 +282,23 @@ class AdviceManager {
             </svg>`
         );
         this.adviser.appendChild(this.helpButton);
-        const stopAdvising = () => {
-            this.helpButton.onclick = null;
-            this.isActive = true;
-            this.removeHelpButton();
-        }
-        if (this.advice.length === 1) {
-            stopAdvising();
+        if (this.advice.length > 1) {
+            this.helpButton.onclick = () => {
+                this.helpButton.onclick = null;
+                this.isActive = true;
+                this.removeHelpButton();
+            };
         } else {
-            this.helpButton.onclick = stopAdvising;
+            this.helpButton.style.visibility = 'hidden';
         }
     }
 
     removeHelpButton() {
         if (this.helpButton === undefined) return;
         this.adviser.style.transitionDuration = this.fadeOutDuration + "ms";
-        const helpButton = this.helpButton;
         this.helpButton = undefined;
         this.isActive = true;
         this.advise(false);
-        window.setTimeout(
-            () => {
-                helpButton.remove();
-            },
-            this.fadeOutDuration
-        );
     }
 
     notify(message) {
@@ -345,30 +335,30 @@ class AdviceManager {
                 this.currentAdviceTimeout = window.setTimeout(() => {
                     const nextAdvice = this.advice[0];
                     if (nextAdvice === undefined) return; // Stop advising when all relevant advice has been displayed
-                        // Fade in
-                        this.adviser.innerText = nextAdvice.message;
-                        this.adviser.style.opacity = "1";
-                        // Set new timeout
-                        switch (nextAdvice.constructor.name) {
-                            case "Message":
-                                this.advice.shift();
-                                this.currentAdviceTimeout = window.setTimeout(
-                                    () => this.advise(false),
-                                    this.fadeInDuration + nextAdvice.message.length * this.readTimePerCharacter
-                                );
-                                break;
-                            case "Demonstration":
-                                this.advice.shift();
-                                this.currentAdviceTimeout = window.setTimeout(
-                                    () => nextAdvice.demonstrate().then(() => {
-                                        this.advise(false);
-                                    }),
-                                    this.fadeInDuration
-                                );
-                                break;
-                            case "Prompt":
-                                this.currentAdviceTimeout = undefined;
-                        }
+                    // Fade in
+                    this.adviser.innerText = nextAdvice.message;
+                    this.adviser.style.opacity = "1";
+                    // Set new timeout
+                    switch (nextAdvice.constructor.name) {
+                        case "Message":
+                            this.advice.shift();
+                            this.currentAdviceTimeout = window.setTimeout(
+                                () => this.advise(false),
+                                this.fadeInDuration + nextAdvice.message.length * this.readTimePerCharacter
+                            );
+                            break;
+                        case "Demonstration":
+                            this.advice.shift();
+                            this.currentAdviceTimeout = window.setTimeout(
+                                () => nextAdvice.demonstrate().then(() => {
+                                    this.advise(false);
+                                }),
+                                this.fadeInDuration
+                            );
+                            break;
+                        case "Prompt":
+                            this.currentAdviceTimeout = undefined;
+                    }
                 }, this.fadeOutDuration);
             }
             if (triggeredBySuccess) {
@@ -513,8 +503,8 @@ class ConfigValueTree extends ConfigNode {
 }
 
 class ConfigKeyTree extends ConfigNode {
-
     static parentElement = document.getElementById("object-tree");
+    static isFixed;
     static rootNode;
     static adviceManager;
 
@@ -581,7 +571,7 @@ class ConfigKeyTree extends ConfigNode {
                 }
             }
             // Add drag functionality
-            this.element.draggable = true;
+            this.setDraggable();
             this.element.ondragend = (event) => {
                 event.stopPropagation();
                 // Style
@@ -629,6 +619,7 @@ class ConfigKeyTree extends ConfigNode {
                     this.element.ondragend(new DragEvent("end"));
                     this.element.ondragend = null; // Stop upcoming dragend event
                     this.parent.removeChild(this.value);
+                    // Save edit
                     clickHandler.unclick(this);
                 }
             };
@@ -686,6 +677,10 @@ class ConfigKeyTree extends ConfigNode {
 
     }
 
+    setDraggable(isDraggable = true) {
+        this.element.draggable = !ConfigKeyTree.isFixed && isDraggable;
+    }
+
     getParentalValidityArrays(childNode) {
         const validParents = [];
         const invalidParents = [];
@@ -718,7 +713,7 @@ class ConfigKeyTree extends ConfigNode {
     }
 
     pin() {
-        this.element.draggable = false;
+        this.setDraggable(false);
         // Make indicator
         if (this.depth < 2) return;
         this.element.insertBefore(getElement(
@@ -736,10 +731,10 @@ class ConfigKeyTree extends ConfigNode {
     }
 
     unpin() {
+        this.setDraggable();
         if (this.element.childNodes.length < 2) return;
         let firstChild = this.element.firstElementChild;
         if (firstChild.matches("svg")) firstChild.remove();
-        this.element.draggable = true;
     }
 
     addChild(child, index) {
@@ -815,7 +810,6 @@ class ConfigKeyTree extends ConfigNode {
 }
 
 function postMessage(event) {
-    if (window.parent === window) return;
     window.parent.postMessage(
         {
             event: event,
@@ -839,10 +833,14 @@ function renderTitle(title, titleElement, closeButton) {
     shortenTitle(title);
 }
 
-function loadDragInterface(title, keyDepth, metaTree, valueForest) {
-
+function loadDragInterface(title, keyDepth, metaTree, valueForest, isFixed) {
     const closeButton = document.getElementById("close");
     const titleElement = document.getElementById("title");
+
+    if (isFixed) {
+        document.getElementById("object-page").classList.add('fixed');
+    }
+
     renderTitle(title, titleElement, closeButton);
 
     // Set up messaging
@@ -853,6 +851,7 @@ function loadDragInterface(title, keyDepth, metaTree, valueForest) {
     };
 
     // Get tree
+    ConfigKeyTree.isFixed = isFixed;
     let configTree = new ConfigKeyTree(
         metaTree,
         {
@@ -873,6 +872,9 @@ function loadDragInterface(title, keyDepth, metaTree, valueForest) {
 
     // Add event listeners to svgs
     (function addStaticPaperFunctionality () {
+        if (isFixed) {
+            return;
+        }
 
         // Add object-destruction style
         const destroyedFile = objectDestroyer.querySelector("#recycled-file");
@@ -961,6 +963,9 @@ function loadDragInterface(title, keyDepth, metaTree, valueForest) {
 
     // Add position trackers to DOM
     (function addDragPositionTrackers(trackerCount) {
+        if (isFixed) {
+            return;
+        }
 
         const scroller = ConfigKeyTree.parentElement.parentElement;
 
@@ -1035,7 +1040,6 @@ function loadFormInterface(configKeyTree) {
         if (isValid(value, configNode)) {
             configNode.setValue(value);
             ConfigKeyTree.adviceManager.notify(configNode instanceof ConfigKeyTree? "key-edit": "value-edit");
-            postMessage("change");
         } else {
             inputElement.classList.add("invalid-input");
             ConfigKeyTree.adviceManager.notify("invalid");

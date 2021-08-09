@@ -126,6 +126,10 @@ body {
     background: var(--dark-background);
 }
 
+#object-page.fixed > #object-scroll-area {
+    display: none;
+}
+
 #paper-container {
     margin: auto;
     height: 17vh;
@@ -138,6 +142,10 @@ body {
     float: left;
     width: 87%;
     margin-right: -3px;
+}
+
+#object-page.fixed > #object-tree {
+    width: 100%;
 }
 
 .draggable-object {
@@ -154,6 +162,10 @@ body {
     color: var(--light-font);
     transition-duration: 2000ms;
     white-space: normal;
+}
+
+#object-page.fixed #adviser, #object-page.fixed .hr {
+    display: none;
 }
 
 #adviser>svg {
